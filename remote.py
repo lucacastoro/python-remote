@@ -36,9 +36,9 @@ except:
 """
 
   wrapper = f"""
-xxx = {funcname}()
+de8e812d3bd = {funcname}()
 sys.stdout.write('{separator}')
-sys.stdout.write(pickle.dumps(xxx))
+sys.stdout.write(pickle.dumps(de8e812d3bd))
 """
 
   source = re.sub(r'@(remote\.)?remotize\([^)]+\)\s*', '', source)

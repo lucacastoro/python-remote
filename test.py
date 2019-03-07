@@ -70,4 +70,11 @@ if __name__ == '__main__':
       ret = asd()
       assert isinstance(ret, str)
       assert ret == "hello"
+
+    def test_hostname(self):
+      def asd():
+        return subprocess.check_output('hostname').rstrip()
+      x = rem(host, asd)
+      assert x == host
+
   unittest.main()
