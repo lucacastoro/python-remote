@@ -21,12 +21,13 @@ def exec(host, func, interpreter=None, options='', transport='ssh'):
 
   funcname = func.__name__
   modules = (val.__name__ for name, val in globals().items() if isinstance(val, types.ModuleType))
-  imports = 'import pickle'
+  imports = 'import sys, pickle'
   encoding = 'utf-8'
   source = inspect.getsource(func)
   separator = '---------- separator ----------'
   for module in modules:
-    imports += f"""
+    if module not in ['pickle', 'sys']:
+      imports += f"""
 try:
   import {module}
 except:
@@ -35,8 +36,8 @@ except:
 
   wrapper = f"""
 xxx = {funcname}()
-print('{separator}')
-print(pickle.dumps(xxx))
+sys.stdout.write('{separator}')
+sys.stdout.write(pickle.dumps(xxx))
 """
 
   lines = source.split('\n')
@@ -62,21 +63,23 @@ print(pickle.dumps(xxx))
   proc.stdin.write(source.encode(encoding))
   out, err = proc.communicate()
 
-  if err:
-    if re.search(f'{interpreter}: command not found', err.decode(encoding)):
-      raise RemoteInterpreterMissing(interpreter)
-    raise RemoteException(err)
-
   if 0 != proc.returncode:
+    if err:
+      if re.search(f'{interpreter}: command not found', err.decode(encoding)):
+        raise RemoteInterpreterMissing(interpreter)
+      raise RemoteException(err)
     raise RemoteException('remote execution failed')
 
   ret = None
 
   if out:
       out = out.split(separator.encode(encoding))
-      ret = out[1].strip()
-      out = out[0].strip()
-      print(out.decode(encoding))
+      ret = out[1]
+      out = out[0]
+      sys.stdout.buffer.write(out)
+
+  if err:
+    sys.stderr.buffer.write(err)
 
   if ret:
     ret = pickle.loads(ret)

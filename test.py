@@ -7,7 +7,8 @@ import remote, logging
 if __name__ == '__main__':
 
   def asd():
-    print('hello world')
+    sys.stdout.write('this is stdout\n')
+    sys.stderr.write('this is stderr\n')
     return 'culo!'
 
   host = 'dev11'
