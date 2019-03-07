@@ -1,6 +1,6 @@
 #!/usr/bin/python3
 
-import os, sys, re, inspect, subprocess, random, types
+import os, sys, re, inspect, subprocess, types, logging, pickle
 
 class RemoteException(Exception):
   def __init__(self, name):
@@ -18,19 +18,26 @@ def exec(host, func, interpreter=None, options='', transport='ssh'):
   
   if not interpreter:
     interpreter = os.path.basename(sys.executable)
-  name = func.__name__
-  modules = (val.__name__ for name, val in globals().items() if isinstance(val, types.ModuleType))
-  imports = ''
-  source = inspect.getsource(func)
-  filename = '/tmp/{}.py'.format(name)
 
+  funcname = func.__name__
+  modules = (val.__name__ for name, val in globals().items() if isinstance(val, types.ModuleType))
+  imports = 'import pickle'
+  encoding = 'utf-8'
+  source = inspect.getsource(func)
+  separator = '---------- separator ----------'
   for module in modules:
     imports += f"""
 try:
   import {module}
 except:
   pass
-    """
+"""
+
+  wrapper = f"""
+xxx = {funcname}()
+print('{separator}')
+print(pickle.dumps(xxx))
+"""
 
   lines = source.split('\n')
   indent = len(lines[0]) - len(lines[0].lstrip())
@@ -38,27 +45,40 @@ except:
 
   source = imports + '\n'
   source += '\n'.join(lines)
-  source += f'\n{name}()'
-  source = source.encode('ascii')
+  source += wrapper
+
+  command = [transport, host, f'{interpreter} {options}']
+
+  logging.debug('Remote, executing: {}\n{}'.format(' '.join(command), source))
 
   proc = subprocess.Popen(
-    [transport, host, f'{interpreter} {options}'],
+    command,
     shell=False,
     stdout=subprocess.PIPE,
     stderr=subprocess.PIPE,
     stdin=subprocess.PIPE,
   )
 
-  proc.stdin.write(source)
+  proc.stdin.write(source.encode(encoding))
   out, err = proc.communicate()
 
   if err:
-    if re.search(f'{interpreter}: command not found', err.decode('utf-8')):
+    if re.search(f'{interpreter}: command not found', err.decode(encoding)):
       raise RemoteInterpreterMissing(interpreter)
     raise RemoteException(err)
 
   if 0 != proc.returncode:
     raise RemoteException('remote execution failed')
 
+  ret = None
+
   if out:
-      print(out.decode('utf-8')[:-1])
+      out = out.split(separator.encode(encoding))
+      ret = out[1].strip()
+      out = out[0].strip()
+      print(out.decode(encoding))
+
+  if ret:
+    ret = pickle.loads(ret)
+
+  return ret
