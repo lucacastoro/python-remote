@@ -1,15 +1,17 @@
 #!/usr/bin/python3
 
-import remote, logging, types, unittest
+import sys, remote, logging, types, unittest
 
 #logging.basicConfig(level=logging.DEBUG)
 
 if __name__ == '__main__':
     
-  host = 'dev11'
+  user = 'test'
+  host = 'localhost'
+  port = 2222
   
   def rem(host, what):
-      return remote.remotely(host, what, interpreter=[None, 'python'])
+      return remote.remotely(host, what, user=user, port=port)
 
   class Tests(unittest.TestCase):
 
@@ -59,7 +61,7 @@ if __name__ == '__main__':
 
     def test_dict(self):
       def asd():
-          return {"hello": 12}
+        return {"hello": 12}
       x = rem(host, asd)
       assert x == {"hello": 12}
 

@@ -15,7 +15,7 @@ class RemoteInterpreterMissing(RemoteException):
     super().__init__(f'missing remote interpreter: {name}')
 
 
-def remotely(host, func, interpreter=None, options='', transport='ssh'):
+def remotely(host, func, interpreter=None, user=None, port=22, options=''):
   
   if not interpreter:
     interpreter = os.path.basename(sys.executable)
@@ -37,8 +37,8 @@ except:
 
   wrapper = f"""
 de8e812d3bd = {funcname}()
-sys.stdout.write('{separator}')
-sys.stdout.write(pickle.dumps(de8e812d3bd))
+sys.stdout.buffer.write(b'{separator}')
+sys.stdout.buffer.write(pickle.dumps(de8e812d3bd))
 """
 
   source = re.sub(r'@(remote\.)?remotize\([^)]+\)\s*', '', source)
@@ -51,12 +51,15 @@ sys.stdout.write(pickle.dumps(de8e812d3bd))
   source += '\n'.join(lines)
   source += wrapper
 
+  if user:
+    host = f'{user}@{host}'
+
   def attempt(python):
 
     if not python:
       python = os.path.basename(sys.executable)
     
-    command = [transport, host, f'{python} {options}']
+    command = ['ssh', '-p', f'{port}', host, f'{python} {options}']
   
     logging.debug('Remote, executing: {}\n{}'.format(' '.join(command), source))
   
@@ -90,6 +93,7 @@ sys.stdout.write(pickle.dumps(de8e812d3bd))
       sys.stderr.buffer.write(err)
   
     if ret:
+      logging.debug(ret)
       ret = pickle.loads(ret)
   
     return ret
