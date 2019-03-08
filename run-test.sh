@@ -9,9 +9,11 @@ docker build -t ssh-server $ROOT &>/dev/null
 docker run --rm -d -h test -p 2222:22 ssh-server &>/dev/null
 
 # execute the tests
-$ROOT/test.py
+$ROOT/test.py; RESULT=$?
 
 # stop (and remove) the container
 for container in $(docker ps | grep ssh-server | cut -d' ' -f1); do
   docker stop $container &>/dev/null
 done
+
+exit $RESULT
