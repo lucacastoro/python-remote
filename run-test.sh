@@ -1,33 +1,41 @@
 #!/bin/bash
 
+ROOT=$(dirname $(realpath $0))
+
+[ -f $ROOT/test.py ] || {
+  echo 'hmmmm... invalid directory'
+  exit 1
+}
+
+[ $(stat -c %a $ROOT/ssh-key) != '600' ] && chomod 600 $ROOT/ssh-key
+
 TEMPLOG=/tmp/jsuidbfuia.log
 
 function at_exit {
+  echo 'cleaning up the mess'
   rm -f $TEMPLOG
 }
 
-trap "rm -f $TEMPLOG" EXIT
+trap at_exit EXIT
 
-ROOT=$(dirname $(realpath $0))
-
-# build or update the image
+echo 'building (or updating) the image'
 docker build -t ssh-server $ROOT &>$TEMPLOG || {
   echo 'Image build failed:'
   cat $TEMPLOG
   exit 1
 }
 
-# run the container (detached)
+echo 'starting the container'
 docker run --rm -d -h test -p 2222:22 ssh-server &>$TEMPLOG || {
   echo 'Could not start the container:'
   cat $TEMPLOG
   exit 1
 }
 
-# execute the tests and store the result
+echo 'executing the tests'
 $ROOT/test.py; RESULT=$?
 
-# stop (and remove) the container
+echo 'stopping (and removing) the container'
 for container in $(docker ps | grep ssh-server | cut -d' ' -f1); do
   docker stop $container &>$TEMPLOG || {
     echo "Error while stopping container $container:"
@@ -35,5 +43,4 @@ for container in $(docker ps | grep ssh-server | cut -d' ' -f1); do
   }
 done
 
-#return the test result
 exit $RESULT
