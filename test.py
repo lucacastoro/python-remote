@@ -4,14 +4,18 @@ import sys, remote, logging, types, unittest
 
 #logging.basicConfig(level=logging.DEBUG)
 
+# ssh -i key -o StrictHostKeyChecking=no -p 2222 test@localhost
+
 if __name__ == '__main__':
     
   user = 'test'
   host = 'localhost'
   port = 2222
-  
-  def rem(host, what):
-      return remote.remotely(host, what, user=user, port=port)
+  hostname = 'test'
+  ssh_opts = '-i ssh-key -q -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null'
+
+  def rem(host, func):
+    return remote.Remote(host, user=user, port=port, ssh_options=ssh_opts)(func)
 
   class Tests(unittest.TestCase):
 
@@ -33,50 +37,47 @@ if __name__ == '__main__':
     def test_int(self):
       def asd():
         return 1
-      assert isinstance(rem(host, asd), int)
+      x = rem(host, asd)
+      assert isinstance(x, int)
+      assert 1 == x
     
     def test_float(self):
       def asd():
         return 0.5
-      assert isinstance(rem(host, asd), float)
+      x = rem(host, asd)
+      assert isinstance(x, float)
+      assert 0.5 == x
     
     def test_string(self):
       def asd():
-        return "hello"
-      ret = rem(host, asd)
-      assert isinstance(ret, str)
-      assert ret == "hello"
+        return 'hello'
+      assert 'hello' == rem(host, asd)
 
     def test_tuple(self):
       def asd():
-        return (12, "hello")
-      x = rem(host, asd)
-      assert x == (12, "hello") 
+        return (12, 'hello')
+      assert (12, 'hello') == rem(host, asd)
 
     def test_list(self):
       def asd():
-        return [12, "hello"]
-      x = rem(host, asd)
-      assert x == [12, "hello"]
+        return [12, 'hello']
+      assert [12, 'hello'] == rem(host, asd)
 
     def test_dict(self):
       def asd():
-        return {"hello": 12}
-      x = rem(host, asd)
-      assert x == {"hello": 12}
+        return {'hello': 12}
+      assert {'hello': 12} == rem(host, asd)
 
     def test_decorator(self):
-      @remote.remotize(host, interpreter=[None, 'python'])
+      @remote.remotize(host, port=port, user=user, ssh_options=ssh_opts)
       def asd():
-        return "hello"
-      ret = asd()
-      assert isinstance(ret, str)
-      assert ret == "hello"
+        return 'hello'
+      assert 'hello' == asd()
 
     def test_hostname(self):
       def asd():
-        return subprocess.check_output('hostname').rstrip()
+        return subprocess.check_output('hostname').decode('utf-8').rstrip()
       x = rem(host, asd)
-      assert x == host
+      assert x == hostname
 
   unittest.main()
