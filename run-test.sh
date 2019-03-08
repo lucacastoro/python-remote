@@ -7,7 +7,7 @@ ROOT=$(dirname $(realpath $0))
   exit 1
 }
 
-[ $(stat -c %a $ROOT/ssh-key) != '600' ] && chomod 600 $ROOT/ssh-key
+[ $(stat -c %a $ROOT/ssh-key) != '600' ] && chmod 600 $ROOT/ssh-key
 
 TEMPLOG=/tmp/jsuidbfuia.log
 
