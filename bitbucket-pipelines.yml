@@ -1,4 +1,4 @@
-image: python:latest
+image: python:3
 options:
   max-time: 5 # min
   docker: true
