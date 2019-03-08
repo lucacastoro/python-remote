@@ -17,7 +17,7 @@ class RemoteInterpreterMissing(RemoteException):
   __slots__ = ('interpreter')
   def __init__(self, name):
     self.interpreter = name
-    super().__init__(f'missing remote interpreter: {name}')
+    super().__init__('missing remote interpreter: {}'.format(name))
 
 
 class Remote:
@@ -41,18 +41,18 @@ class Remote:
     separator = '---------- separator ----------'
     for module in modules:
       if module not in ['pickle', 'sys']:
-        imports += f"""
+        imports += """
 try:
-  import {module}
+  import {}
 except:
   pass
-"""
+""".format(module)
 
-    wrapper = f"""
+    wrapper = """
 de8e812d3bd = {funcname}()
 sys.stdout.buffer.write(b'{separator}')
 sys.stdout.buffer.write(pickle.dumps(de8e812d3bd))
-"""
+""".format(funcname=funcname, separator=separator)
 
     source = re.sub(r'@(remote\.)?remotize\([^)]+\)\s*', '', source)
 
@@ -65,14 +65,14 @@ sys.stdout.buffer.write(pickle.dumps(de8e812d3bd))
     source += wrapper
 
     if self.user:
-      host = f'{self.user}@{self.host}'
+      host = '{}@{}'.format(self.user, self.host)
     else:
       host = self.host
       
-    command = ['ssh', '-p', f'{self.port}', ]
+    command = ['ssh', '-p', str(self.port), ]
     if self.ssh_options:
       command += self.ssh_options.split(' ')
-    command += [host, f'{python} {py_options}' if py_options else python]
+    command += [host, '{} {}'.format(python, py_options) if py_options else python]
   
     logging.debug('Remote, executing: {}\n{}'.format(' '.join(command), source))
 
@@ -91,7 +91,7 @@ sys.stdout.buffer.write(pickle.dumps(de8e812d3bd))
       if err:
         if 'Connection closed by remote host' in err.decode(encoding):
           raise RemoteConnectionRefused()
-        if f'{python}: command not found' in err.decode(encoding):
+        if '{}: command not found'.format(python) in err.decode(encoding):
           raise RemoteInterpreterMissing(python)
         raise RemoteException(err)
       raise RemoteException('remote execution failed')
