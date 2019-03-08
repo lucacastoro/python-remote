@@ -1,0 +1,14 @@
+image: ubuntu:latest
+options:
+  max-time: 5 # min
+  docker: true
+pipelines:
+  default:
+    - step:
+        script:
+          - ./run-test.sh
+        services:
+          - docker
+        caches:
+          - docker
+
