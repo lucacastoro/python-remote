@@ -21,12 +21,12 @@ root=$(dirname $(realpath $0))
 
 templog=$(mktemp)
 
-function at_exit {
+function remove_log {
   echo 'cleaning up the mess'
   rm -f $templog
 }
 
-trap at_exit EXIT
+trap remove_log EXIT
 
 echo 'building (or updating) the image'
 docker build -t $image . &>$templog || {
@@ -42,22 +42,33 @@ docker run --rm -d -h $host -p $port:22 $image &>$templog || {
   exit 1
 }
 
-echo 'installing pytest'
-(pip install --user --upgrade $pytest || pip3 install --user --upgrade $pytest) &>$templog || {
-  echo 'Could not install pytest:'
-  cat $templog
-  exit 1
+function stop_containers {
+  echo 'stopping (and removing) the container'
+  for container in $(docker ps | grep $image | cut -d' ' -f1); do
+    docker stop $container &>$templog || {
+      echo "Error while stopping container $container:"
+      cat $templog
+    }
+  done
 }
 
-echo 'executing the tests'
-pytest $@; result=$?
+trap 'stop_containers; remove_log' EXIT
 
-echo 'stopping (and removing) the container'
-for container in $(docker ps | grep $image | cut -d' ' -f1); do
-  docker stop $container &>$templog || {
-    echo "Error while stopping container $container:"
+pytest --version &>/dev/null || {
+  echo 'installing pytest'
+  (pip install --user --upgrade $pytest || \
+   pip3 install --user --upgrade $pytest || \
+   apt install -y python3-pytest) &>$templog && {
+    echo 'Could not install pytest:'
     cat $templog
+    exit 1
   }
-done
+}
+
+pyt=pytest
+$pyt --version &>/dev/null || pyt=pytest3
+
+echo 'executing the tests'
+$pyt -vv $@; result=$?
 
 exit $result
