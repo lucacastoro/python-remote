@@ -54,15 +54,12 @@ class Remote:
 
   @staticmethod
   def _gen_imports(modules):
-    imports = 'import sys, pickle, importlib'
-    fmt = '''
-try:
-  import {mod}
-except:
-  pass'''
-    for mod in modules:
-      imports += fmt.format(mod=mod)
-    return imports
+    return '''import sys, pickle, importlib
+for mod in {mods}:
+  try:
+    vars()[mod] = importlib.import_module(mod)
+  except:
+    pass'''.format(mods=str(modules))
 
   def __call__(self, func, *args, **kwargs):
     python = self.python if self.python else os.path.basename(sys.executable)
@@ -82,6 +79,8 @@ sys.stdout.flush()
 sys.stdout.buffer.write(b'{separator}')
 sys.stdout.buffer.write(pickle.dumps(de8e812d3bd))
 '''.format(imports=self._gen_imports(modules), code=self._get_source(func), funcname=funcname, separator=separator, args=str(args), kwargs=str(kwargs))
+
+    logging.debug(source)
 
     host = '{user}@{host}'.format(
       user=self.user,
