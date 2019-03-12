@@ -1,10 +1,22 @@
 #!/bin/bash
 
+# requires pytest, docker
+
 image='ssh-server'
 port=2222
 host='test'
 user='test'
 root=$(dirname $(realpath $0))
+
+pytest_version=$(pytest --version 2>&1) || {
+  echo 'missing pytest'
+  exit 1
+}
+
+(echo $pytest_version | grep 'python3') &>/dev/null || {
+  echo 'python version used by pytest must be 3.x'
+  exit 1
+}
 
 [ -f $root/remote.py ] || {
   echo 'hmmmm... invalid directory'
