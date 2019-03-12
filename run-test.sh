@@ -1,49 +1,63 @@
 #!/bin/bash
 
-ROOT=$(dirname $(realpath $0))
+pytest='pytest==4.3.0'
+image='ssh-server'
+port=2222
+host='test'
+user='test'
+root=$(dirname $(realpath $0))
 
-[ -f $ROOT/test.py ] || {
+[ -f $root/remote.py ] || {
   echo 'hmmmm... invalid directory'
   exit 1
 }
 
-[ $(stat -c %a $ROOT/ssh-key) != '600' ] && {
+[ "$PWD" != "$root" ] && cd $root
+
+[ $(stat -c %a ./ssh-key) != '600' ] && {
   echo 'adjusting key permissions'
-  chmod 600 $ROOT/ssh-key
+  chmod 600 ./ssh-key
 }
 
-TEMPLOG=/tmp/jsuidbfuia.log
+templog=$(mktemp)
 
 function at_exit {
   echo 'cleaning up the mess'
-  rm -f $TEMPLOG
+  rm -f $templog
 }
 
 trap at_exit EXIT
 
 echo 'building (or updating) the image'
-docker build -t ssh-server $ROOT &>$TEMPLOG || {
+docker build -t $image . &>$templog || {
   echo 'Image build failed:'
-  cat $TEMPLOG
+  cat $templog
   exit 1
 }
 
 echo 'starting the container'
-docker run --rm -d -h test -p 2222:22 ssh-server &>$TEMPLOG || {
+docker run --rm -d -h $host -p $port:22 $image &>$templog || {
   echo 'Could not start the container:'
-  cat $TEMPLOG
+  cat $templog
+  exit 1
+}
+
+echo 'installing pytest'
+(pip install --user --upgrade $pytest || pip3 install --user --upgrade $pytest) &>$templog || {
+  echo 'Could not install pytest:'
+  cat $templog
   exit 1
 }
 
 echo 'executing the tests'
-$ROOT/test.py; RESULT=$?
+pytest $@; result=$?
 
 echo 'stopping (and removing) the container'
-for container in $(docker ps | grep ssh-server | cut -d' ' -f1); do
-  docker stop $container &>$TEMPLOG || {
+for container in $(docker ps | grep $image | cut -d' ' -f1); do
+  docker stop $container &>$templog || {
     echo "Error while stopping container $container:"
-    cat $TEMPLOG
+    cat $templog
   }
 done
 
-exit $RESULT
+exit $result
