@@ -1,6 +1,5 @@
 #!/bin/bash
 
-pytest='pytest==4.3.0'
 image='ssh-server'
 port=2222
 host='test'
@@ -14,16 +13,23 @@ root=$(dirname $(realpath $0))
 
 [ "$PWD" != "$root" ] && cd $root
 
-[ $(stat -c %a ./ssh-key) != '600' ] && {
-  echo 'adjusting key permissions'
-  chmod 600 ./ssh-key
+templog=$(mktemp) || {
+  echo 'could not create a temp. log file'
+  exit 1
 }
-
-templog=$(mktemp)
 
 function remove_log {
   echo 'cleaning up the mess'
   rm -f $templog
+}
+
+[ "$(stat -c %a ./ssh-key)" != '600' ] && {
+  echo 'adjusting key permissions'
+  chmod 600 ./ssh-key &>$templog || {
+    echo 'could not change key permissions:'
+    cat $templog
+    exit 1
+  }
 }
 
 trap remove_log EXIT
