@@ -42,33 +42,15 @@ docker run --rm -d -h $host -p $port:22 $image &>$templog || {
   exit 1
 }
 
-function stop_containers {
-  echo 'stopping (and removing) the container'
-  for container in $(docker ps | grep $image | cut -d' ' -f1); do
-    docker stop $container &>$templog || {
-      echo "Error while stopping container $container:"
-      cat $templog
-    }
-  done
-}
-
-trap 'stop_containers; remove_log' EXIT
-
-pytest --version &>/dev/null || {
-  echo 'installing pytest'
-  (pip install --user --upgrade $pytest || \
-   pip3 install --user --upgrade $pytest || \
-   apt install -y python3-pytest) &>$templog && {
-    echo 'Could not install pytest:'
-    cat $templog
-    exit 1
-  }
-}
-
-pyt=pytest
-$pyt --version &>/dev/null || pyt=pytest3
-
 echo 'executing the tests'
-$pyt -vv $@; result=$?
+pytest -vv $@; result=$?
+
+echo 'stopping (and removing) the container'
+for container in $(docker ps | grep $image | cut -d' ' -f1); do
+  docker stop $container &>$templog || {
+    echo "Error while stopping container $container:"
+    cat $templog
+  }
+done
 
 exit $result

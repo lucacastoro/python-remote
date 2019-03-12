@@ -6,6 +6,7 @@ pipelines:
   default:
     - step:
         script:
+          - pip install pytest
           - ./run-test.sh
         services:
           - docker
