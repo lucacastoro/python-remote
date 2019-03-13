@@ -18,7 +18,7 @@ opts = {
 
 
 def rem(host, func, *args, **kwargs):
-    return remote.Remote(host, user=user, port=port, key=pkey, ssh_options=opts)(func, *args, **kwargs)
+    return remote.Remote(func, host, user=user, port=port, key=pkey, ssh_options=opts)(*args, **kwargs)
 
 
 class All(unittest.TestCase):
