@@ -6,7 +6,6 @@ pipelines:
   default:
     - step:
         script:
-          - pip install -r test_requirements.txt
           - ./run-test.sh
         services:
           - docker

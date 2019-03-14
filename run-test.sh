@@ -1,29 +1,20 @@
 #!/bin/bash
 
-# requires pytest, docker
+set -e
 
-image='ssh-server'
 port=2222
-host='test'
-user='test'
+image_server='python-remote/server:latest'
+image_client='python-remote/client:latest'
+server_hostname='test-server'
+client_hostname='test-client'
 root=$(dirname $(realpath $0))
 
-pytest_version=$(pytest --version 2>&1) || {
-  echo 'missing pytest'
-  exit 1
-}
+[ "$PWD" != "$root" ] && cd $root
 
-(echo $pytest_version | grep 'python3') &>/dev/null || {
-  echo 'python version used by pytest must be 3.x'
-  exit 1
-}
-
-[ -f $root/remote.py ] || {
+[ -f ./remote.py ] || {
   echo 'hmmmm... invalid directory'
   exit 1
 }
-
-[ "$PWD" != "$root" ] && cd $root
 
 templog=$(mktemp) || {
   echo 'could not create a temp. log file'
@@ -31,44 +22,45 @@ templog=$(mktemp) || {
 }
 
 function remove_log {
-  echo 'cleaning up the mess'
   rm -f $templog
-}
-
-[ "$(stat -c %a ./ssh-key)" != '600' ] && {
-  echo 'adjusting key permissions'
-  chmod 600 ./ssh-key &>$templog || {
-    echo 'could not change key permissions:'
-    cat $templog
-    exit 1
-  }
 }
 
 trap remove_log EXIT
 
-echo 'building (or updating) the image'
-docker build -t $image . &>$templog || {
-  echo 'Image build failed:'
-  cat $templog
-  exit 1
+function stage {
+  local before=$(date +%s)
+  local label=$1
+  shift
+  stdbuf -o 0 echo -n "$label... "
+  $@ &>$templog
+  local ret=$?
+  let "elapsed = $(date +%s) - $before"
+  if [ $ret -eq 0 ]; then
+    echo "ok ($elapsed sec)"
+  else
+    echo "FAILED ($elapsed sec):"
+    cat $templog
+  fi
+  return $ret
 }
 
-echo 'starting the container'
-docker run --rm -d -h $host -p $port:22 $image &>$templog || {
-  echo 'Could not start the container:'
-  cat $templog
-  exit 1
-}
+stage 'building (or updating) the server image' \
+  docker build -t $image_server -f Dockerfile.server . || exit 1
+
+stage 'building (or updating) the client image' \
+  docker build -t $image_client -f Dockerfile.client . || exit 1
+
+stage 'starting the server container' \
+  docker run --rm -d -h $server_hostname -p $port:22 $image_server || exit 1
+
+server_id=$(docker ps | grep python-remote/server:latest | cut -d' ' -f1)
+server_ip=$(docker inspect $server_id | grep '"Gateway"' | head -1 | sed -r 's/\s*"Gateway": "([^"]+)",/\1/g')
 
 echo 'executing the tests'
-pytest -vv $@; result=$?
+docker run --rm -e TEST_SERVER=$server_ip -h $client_hostname $image_client
+result=$?
 
-echo 'stopping (and removing) the container'
-for container in $(docker ps | grep $image | cut -d' ' -f1); do
-  docker stop $container &>$templog || {
-    echo "Error while stopping container $container:"
-    cat $templog
-  }
-done
+stage 'stopping (and removing) the server container' \
+  docker stop $server_id || true
 
 exit $result

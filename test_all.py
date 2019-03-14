@@ -2,13 +2,19 @@
 
 import sys, os, io, remote, logging, types, unittest
 from remote import remotely
+import netifaces
 import pytest
 
 # logging.basicConfig(level=logging.DEBUG)
 
-hostname = 'test'
+def get_address():
+    return '172.17.0.1'
+    iface = [i for i in netifaces.interfaces() if i != 'lo'][0]
+    return netifaces.ifaddresses(iface)[netifaces.AF_INET][0]['addr']
+
+hostname = 'test-server'
 user = 'test'
-host = 'localhost'
+host = os.environ['TEST_SERVER'] or 'localhost' 
 port = 2222
 pkey = './ssh-key'
 opts = {
