@@ -1,7 +1,5 @@
 #!/bin/bash
 
-set -e
-
 port=2222
 image_server='python-remote/server:latest'
 image_client='python-remote/client:latest'
