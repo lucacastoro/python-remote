@@ -89,8 +89,8 @@ Will not work, resulting very likely in a `NameError`, but the following will:
 ```
 @remotely(...)
 def foo():
-	def bar():
-	    return "world"
+    def bar():
+        return "world"
     return "hello %s" % bar()
 ```
 #### 2) Avoid classes (Part I)
