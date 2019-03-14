@@ -105,3 +105,6 @@ As it won't work, preliminary support for `@staticmethod` is being developed, fu
 Arguments and return values can be any complex standard object (dictionaries, sets, tuples as well as int or floats for instance) but passing (or returning) classes instances is not supported yet.
 #### 4) Embrace the future
 Actually the library does not support Python 2.x at all so any attempt to run the library using Python 2 or to execute the remote functions on a host not provided of a Python 3.x interpreter will (miserably) fail.
+
+## Licensing
+<a href="http://www.wtfpl.net/"><img src="http://www.wtfpl.net/wp-content/uploads/2012/12/wtfpl-badge-2.png" width="80" height="15" alt="WTFPL" /></a>
