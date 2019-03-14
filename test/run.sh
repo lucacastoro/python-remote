@@ -5,7 +5,7 @@ image_server='python-remote/server:latest'
 image_client='python-remote/client:latest'
 server_hostname='test-server'
 client_hostname='test-client'
-root=$(realpath $(dirname $0)/..)
+root=$(readlink -f $(dirname $0)/..)
 test=$root/test
 
 [ "$PWD" != "$test" ] && cd $test
