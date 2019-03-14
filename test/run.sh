@@ -5,11 +5,12 @@ image_server='python-remote/server:latest'
 image_client='python-remote/client:latest'
 server_hostname='test-server'
 client_hostname='test-client'
-root=$(dirname $(realpath $0))
+root=$(realpath $(dirname $0)/..)
+test=$root/test
 
-[ "$PWD" != "$root" ] && cd $root
+[ "$PWD" != "$test" ] && cd $test
 
-[ -f ./remote.py ] || {
+[ -f ./test_all.py ] || {
   echo 'hmmmm... invalid directory'
   exit 1
 }
@@ -49,16 +50,14 @@ stage 'building (or updating) the server image' \
 stage 'building (or updating) the client image' \
   docker build -t $image_client -f Dockerfile.client . || exit 1
 
-stage 'starting the server container' \
-  docker run --rm -d -h $server_hostname -p $port:22 $image_server || exit 1
-
-server_id=$(docker ps | grep python-remote/server:latest | cut -d' ' -f1)
+echo 'starting the server container'
+server_id=$(docker run --rm -d -h $server_hostname -p $port:22 $image_server) || exit 1
 server_ip=$(docker inspect $server_id | grep '"Gateway"' | head -1 | sed -r 's/\s*"Gateway": "([^"]+)",/\1/g')
 
 echo 'executing the tests'
 docker run --rm -e TEST_SERVER=$server_ip -h $client_hostname \
-  -v $root/remote.py:/home/client/test/remote.py \
-  -v $root/test_all.py:/home/client/test/test_all.py \
+  -v $root/remote:/home/client/test/remote \
+  -v $test/test_all.py:/home/client/test/test_all.py \
   $image_client $@
 result=$?
 
