@@ -33,6 +33,7 @@ function stage {
   $@ &>$templog
   local ret=$?
   let "elapsed = $(date +%s) - $before"
+  [ $elapsed -eq 0 ] && elapsed='<1'
   if [ $ret -eq 0 ]; then
     echo "ok ($elapsed sec)"
   else
@@ -55,7 +56,10 @@ server_id=$(docker ps | grep python-remote/server:latest | cut -d' ' -f1)
 server_ip=$(docker inspect $server_id | grep '"Gateway"' | head -1 | sed -r 's/\s*"Gateway": "([^"]+)",/\1/g')
 
 echo 'executing the tests'
-docker run --rm -e TEST_SERVER=$server_ip -h $client_hostname $image_client
+docker run --rm -e TEST_SERVER=$server_ip -h $client_hostname \
+  -v $root/remote.py:/home/client/test/remote.py \
+  -v $root/test_all.py:/home/client/test/test_all.py \
+  $image_client $@
 result=$?
 
 stage 'stopping (and removing) the server container' \

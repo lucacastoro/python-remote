@@ -2,11 +2,11 @@ FROM python:3
 
 RUN apt update -qq && apt install -y openssh-client
 RUN adduser --disabled-password --quiet client
-COPY remote.py test_all.py test_requirements.txt ssh-key /home/client/test/
-RUN chown -R client:client /home/client
-RUN chmod 600 /home/client/test/ssh-key
+COPY test_requirements.txt ssh-key /home/client/test/
+RUN chown -R client:client /home/client && \
+    chmod 600 /home/client/test/ssh-key
 RUN echo 'export PATH=$PATH:/home/client/.local/bin' >> /home/client/test/.bashrc
 USER client
 RUN cd /home/client/test && pip install -U --user -r test_requirements.txt
 WORKDIR /home/client/test
-ENTRYPOINT /home/client/.local/bin/pytest
+ENTRYPOINT ["/home/client/.local/bin/pytest"]
