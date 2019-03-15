@@ -108,4 +108,4 @@ Arguments and return values can be any complex standard object (dictionaries, se
 Actually the library does not support Python 2.x at all so any attempt to run the library using Python 2 or to execute the remote functions on a host not provided of a Python 3.x interpreter will (miserably) fail.
 
 ---
-[![Build Status](https://travis-ci.org/lucacastoro/python-remote.svg?branch=master)](https://travis-ci.org/lucacastoro/python-remote) <a href="http://www.wtfpl.net/"><img src="http://www.wtfpl.net/wp-content/uploads/2012/12/wtfpl-badge-2.png" width="85" height="20" alt="WTFPL" /></a>
+[![Build Status](https://travis-ci.org/lucacastoro/python-remote.svg?branch=master)](https://travis-ci.org/lucacastoro/python-remote) <a href="http://www.wtfpl.net/">
