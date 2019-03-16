@@ -2,8 +2,8 @@ services:
  - docker
 
 branches:
-  only:
-  - master
+  except:
+  - /.*-no-ci$/
 
 script:
  - ./test/run.sh
