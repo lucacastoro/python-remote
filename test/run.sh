@@ -62,10 +62,16 @@ function stop_images {
 trap 'remove_log; stop_images' EXIT
 
 echo 'executing the tests'
-docker run --rm -e TEST_SERVER=$server_ip -h $client_hostname \
+docker run \
+  --rm \
+  -e USERNAME='test' \
+  -e SERVER_IP=$server_ip \
+  -e SERVER_PORT=$port \
+  -e SERVER_NAME=$server_hostname \
+  -e PYTHONDONTWRITEBYTECODE=1 \
+  -h $client_hostname \
   -v /var/run/docker.sock:/var/run/docker.sock \
   -v $root:/home/client/test \
   -w /home/client/test/test \
-  -e PYTHONDONTWRITEBYTECODE=1 \
   $image_client \
   pytest $@

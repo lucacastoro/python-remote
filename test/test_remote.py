@@ -7,16 +7,15 @@ sys.path.append('..')
 from remote import Remote
 from remote import remotely
 
-hostname = 'test-server'
-user = 'test'
-host = os.environ['TEST_SERVER'] # '172.17.0.1'
-port = 2222
+user = os.environ['USERNAME']
+host = os.environ['SERVER_IP']
+port = os.environ['SERVER_PORT']
+name = os.environ['SERVER_NAME']
 pkey = './ssh-key'
 opts = {
     'StrictHostKeyChecking': False,
     'UserKnownHostsFile': '/dev/null'
 }
-
 
 def test_decorator():
     @remotely(host, port=port, user=user, key=pkey, ssh_options=opts)
@@ -94,7 +93,7 @@ def test_hostname():
         import subprocess
         return subprocess.check_output('hostname').decode('utf-8').rstrip()
     x = rem(asd)
-    assert(x == hostname)
+    assert(x == name)
 
 
 def test_arg1():

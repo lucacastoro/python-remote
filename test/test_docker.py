@@ -7,10 +7,11 @@ sys.path.append('..')
 import docker
 from docker import dockerly
 
-# logging.basicConfig(level=logging.DEBUG)
+image = 'python'
+tag = '3'
 
 def dock(func, *args, **kwargs):
-    return docker.Docker(func, 'python', tag='3')(*args, **kwargs)
+    return docker.Docker(func, image, tag=tag)(*args, **kwargs)
 
 
 def test_void():
@@ -20,7 +21,7 @@ def test_void():
 
 
 def test_decorator():
-    @docker.dockerly('python', tag='3')
+    @docker.dockerly(image, tag=tag)
     def asd():
         return 'hello'
     assert('hello' == asd())
