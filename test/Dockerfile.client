@@ -1,12 +1,7 @@
-FROM python:3
+FROM docker:latest
 
-RUN apt update -qq && apt install -y openssh-client
-RUN adduser --disabled-password --quiet client
-COPY requirements.txt ssh-key /home/client/test/
-RUN chown -R client:client /home/client && \
-    chmod 600 /home/client/test/ssh-key
-RUN echo 'export PATH=$PATH:/home/client/.local/bin' >> /home/client/test/.bashrc
-USER client
-RUN cd /home/client/test && pip install -U --user -r requirements.txt
-WORKDIR /home/client/test
-ENTRYPOINT ["/home/client/.local/bin/pytest"]
+COPY requirements.txt ssh-key /testing/
+RUN apk add --update openssh-client python3
+RUN chmod 600 /testing/ssh-key
+RUN python3 -m pip install -U -r /testing/requirements.txt
+ENTRYPOINT ["/usr/bin/pytest"]

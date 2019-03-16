@@ -1,6 +1,9 @@
 #!/usr/bin/python3
 
 import sys, os, io, logging, types, unittest
+
+sys.path.append('..')
+
 import docker
 from docker import dockerly
 

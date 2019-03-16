@@ -1,16 +1,10 @@
 #!/usr/bin/python3
 
-import os, sys, re, inspect, subprocess, types, logging, pickle
+import os, sys, re, inspect, types, logging, pickle
 from functools import wraps
 
-
-class DockerException(Exception):
-
-    def __init__(self, name):
-        super().__init__(name)
-
 #
-# The remote script is in the form (not exactly)
+# The script is in the form (not exactly)
 #  ```
 #  import foundamental modules  # there are some foundamental modules that we cannot avoid
 #
@@ -46,6 +40,7 @@ class Executor:
         self.python = python
         self.py_options = py_options
         self.decorators = decorators
+        self.encoding = 'utf-8'
 
     def _out(self, out):
         sys.stdout.buffer.write(out)
@@ -75,7 +70,6 @@ class Executor:
     def __call__(self, *args, **kwargs):
         funcname = self.func.__name__
         modules = [val.__name__ for name, val in globals().items() if isinstance(val, types.ModuleType)]
-        encoding = 'utf-8'
         separator = '---------- 6262f79e1f287a957cc5d8b ----------'
         source_fmt = '''
 import sys, pickle, importlib
@@ -114,14 +108,14 @@ sys.stdout.buffer.write(pickle.dumps(de8e812d3bd))
 
         if code is not 0:
             if err:
-                raise Exception(err)
-            raise Exception('remote execution failed')
+                raise self._fail(err)
+            raise self._fail('execution failed')
     
         ret = None
 
         if out:
-            spl = out.split(separator.encode(encoding))
-            pre = spl[0]  # ssh output
+            spl = out.split(separator.encode(self.encoding))
+            pre = spl[0]  # executor output
             out = spl[1]  # script output
             ret = spl[2]  # return value
             if pre:
@@ -130,8 +124,8 @@ sys.stdout.buffer.write(pickle.dumps(de8e812d3bd))
                 self._out(out)
     
         if err:
-            spl = err.split(separator.encode(encoding))
-            pre = spl[0]  # ssh output
+            spl = err.split(separator.encode(self.encoding))
+            pre = spl[0]  # executor output
             err = spl[1]  # script output
             if pre:
                 logging.warning(pre)
@@ -143,44 +137,3 @@ sys.stdout.buffer.write(pickle.dumps(de8e812d3bd))
             ret = pickle.loads(ret)
     
         return ret
-
-class Docker(Executor):
-
-    def __init__(self, func, image, tag='latest', python=None, py_options=None):
-        super().__init__(func, python, py_options, ['docker.dockerly'])
-        self.image = image
-        self.tag = tag
-        pass
-
-    def _execute(self, script):
-
-        python = self.python or 'python3'
-        if self.py_options:
-            python += ' ' + self.py_options
-        local_script = '/tmp/asdasdasd.py'
-        remote_script = local_script
-
-        command = [
-            'docker', 'run', '-i', '--rm',
-            "{image}:{tag}".format(image=self.image, tag=self.tag),
-            python
-        ]
-
-        with subprocess.Popen(
-            command,
-            shell=False,
-            stdout=subprocess.PIPE,
-            stderr=subprocess.PIPE,
-            stdin=subprocess.PIPE,
-        ) as proc:
-            out, err = proc.communicate(script.encode('utf-8'))
-            return proc.returncode, out, err
-
-
-def dockerly(*ext_args, **ext_kwargs):
-    def wrap(func):
-        def wrapped_f(*args, **kwargs):
-            return Docker(func, *ext_args, **ext_kwargs)(*args, **kwargs)
-        return wrapped_f
-    return wrap
-

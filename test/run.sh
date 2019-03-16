@@ -10,7 +10,7 @@ test=$root/test
 
 [ "$PWD" != "$test" ] && cd $test
 
-[ -f ./test_all.py ] || {
+[ -f ./requirements.txt ] || {
   echo 'hmmmm... invalid directory'
   exit 1
 }
@@ -56,8 +56,10 @@ server_ip=$(docker inspect $server_id | grep '"Gateway"' | head -1 | sed -r 's/\
 
 echo 'executing the tests'
 docker run --rm -e TEST_SERVER=$server_ip -h $client_hostname \
-  -v $root/remote:/home/client/test/remote \
-  -v $test/test_all.py:/home/client/test/test_all.py \
+  -v /var/run/docker.sock:/var/run/docker.sock \
+  -v $root:/home/client/test \
+  -w /home/client/test/test \
+  -e PYTHONDONTWRITEBYTECODE=1 \
   $image_client $@
 result=$?
 

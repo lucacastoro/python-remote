@@ -1,19 +1,15 @@
 #!/usr/bin/python3
 
-import sys, os, io, remote, logging, types, unittest
+import sys, os
+
+sys.path.append('..')
+
+from remote import Remote
 from remote import remotely
-import netifaces
-
-# logging.basicConfig(level=logging.DEBUG)
-
-def get_address():
-    return '172.17.0.1'
-    iface = [i for i in netifaces.interfaces() if i != 'lo'][0]
-    return netifaces.ifaddresses(iface)[netifaces.AF_INET][0]['addr']
 
 hostname = 'test-server'
 user = 'test'
-host = os.environ['TEST_SERVER'] or 'localhost' 
+host = os.environ['TEST_SERVER'] # '172.17.0.1'
 port = 2222
 pkey = './ssh-key'
 opts = {
@@ -23,14 +19,14 @@ opts = {
 
 
 def test_decorator():
-    @remote.remotely(host, port=port, user=user, key=pkey, ssh_options=opts)
+    @remotely(host, port=port, user=user, key=pkey, ssh_options=opts)
     def asd():
         return 'hello'
     assert('hello' == asd())
 
 
 def rem(func, *args, **kwargs):
-    return remote.Remote(func, host, user=user, port=port, key=pkey, ssh_options=opts)(*args, **kwargs)
+    return Remote(func, host, user=user, port=port, key=pkey, ssh_options=opts)(*args, **kwargs)
 
 
 def test_stdout(capsys):
@@ -95,6 +91,7 @@ def test_dict():
 
 def test_hostname():
     def asd():
+        import subprocess
         return subprocess.check_output('hostname').decode('utf-8').rstrip()
     x = rem(asd)
     assert(x == hostname)
