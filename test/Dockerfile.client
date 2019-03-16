@@ -4,4 +4,4 @@ COPY requirements.txt ssh-key /testing/
 RUN apk add --update openssh-client python3
 RUN chmod 600 /testing/ssh-key
 RUN python3 -m pip install -U -r /testing/requirements.txt
-ENTRYPOINT ["/usr/bin/pytest"]
+#ENTRYPOINT ["/usr/bin/pytest"]

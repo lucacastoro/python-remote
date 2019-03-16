@@ -54,16 +54,18 @@ echo 'starting the server container'
 server_id=$(docker run --rm -d -h $server_hostname -p $port:22 $image_server) || exit 1
 server_ip=$(docker inspect $server_id | grep '"Gateway"' | head -1 | sed -r 's/\s*"Gateway": "([^"]+)",/\1/g')
 
+function stop_images {
+  stage 'stopping (and removing) the server container' \
+    docker stop $server_id
+}
+
+trap 'remove_log; stop_images' EXIT
+
 echo 'executing the tests'
 docker run --rm -e TEST_SERVER=$server_ip -h $client_hostname \
   -v /var/run/docker.sock:/var/run/docker.sock \
   -v $root:/home/client/test \
   -w /home/client/test/test \
   -e PYTHONDONTWRITEBYTECODE=1 \
-  $image_client $@
-result=$?
-
-stage 'stopping (and removing) the server container' \
-  docker stop $server_id || true
-
-exit $result
+  $image_client \
+  pytest $@
