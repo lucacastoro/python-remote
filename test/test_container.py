@@ -4,14 +4,14 @@ import sys, os, io, logging, types, unittest
 
 sys.path.append('..')
 
-import docker
-from docker import dockerly
+from execute.contained import Contained
+from execute.contained import contained
 
 image = 'python'
 tag = '3'
 
 def dock(func, *args, **kwargs):
-    return docker.Docker(func, image, tag=tag)(*args, **kwargs)
+    return Contained(func, image, tag=tag)(*args, **kwargs)
 
 
 def test_void():
@@ -21,7 +21,7 @@ def test_void():
 
 
 def test_decorator():
-    @docker.dockerly(image, tag=tag)
+    @contained(image, tag=tag)
     def asd():
         return 'hello'
     assert('hello' == asd())

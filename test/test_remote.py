@@ -4,8 +4,8 @@ import sys, os
 
 sys.path.append('..')
 
-from remote import Remote
-from remote import remotely
+from execute.remotely import Remotely
+from execute.remotely import remotely
 
 user = os.environ['USERNAME']
 host = os.environ['SERVER_IP']
@@ -25,7 +25,7 @@ def test_decorator():
 
 
 def rem(func, *args, **kwargs):
-    return Remote(func, host, user=user, port=port, key=pkey, ssh_options=opts)(*args, **kwargs)
+    return Remotely(func, host, user=user, port=port, key=pkey, ssh_options=opts)(*args, **kwargs)
 
 
 def test_stdout(capsys):

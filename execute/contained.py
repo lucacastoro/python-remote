@@ -2,17 +2,17 @@
 
 import os, sys, re, subprocess, logging
 from functools import wraps
-from executor import Executor
+from .executor import Executor
 
-class DockerException(Exception):
+class ContainerException(Exception):
 
     def __init__(self, name):
         super().__init__(name)
 
-class Docker(Executor):
+class Contained(Executor):
 
     def __init__(self, func, image, tag='latest', python=None, py_options=None):
-        super().__init__(func, python, py_options, ['docker.dockerly'])
+        super().__init__(func, python, py_options, ['contained.contained'])
         self.image = image
         self.tag = tag
         pass
@@ -42,13 +42,13 @@ class Docker(Executor):
             return proc.returncode, out, err
 
     def _fail(self, err):
-        raise DockerException(err)
+        raise ContainerException(err)
 
 
-def dockerly(*ext_args, **ext_kwargs):
+def contained(*ext_args, **ext_kwargs):
     def wrap(func):
         def wrapped_f(*args, **kwargs):
-            return Docker(func, *ext_args, **ext_kwargs)(*args, **kwargs)
+            return Contained(func, *ext_args, **ext_kwargs)(*args, **kwargs)
         return wrapped_f
     return wrap
 

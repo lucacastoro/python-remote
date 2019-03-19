@@ -2,7 +2,7 @@
 
 import os, sys, subprocess, logging
 from functools import wraps
-from executor import Executor
+from .executor import Executor
 
 class RemoteException(Exception):
 
@@ -23,7 +23,7 @@ class RemoteInterpreterMissing(RemoteException):
         super().__init__('missing remote interpreter: {}'.format(name))
 
 
-class Remote(Executor):
+class Remotely(Executor):
 
     def __init__(self, func, hostname,
         port=22,  # ssh port
@@ -36,7 +36,7 @@ class Remote(Executor):
         python=None,  # python interpreter or current one
         py_options=None  # extra py arguments to pass to the interpreter
     ):
-        super().__init__(func, python, py_options, ['remote.remotely'])
+        super().__init__(func, python, py_options, ['remotely.remotely'])
         self.host = hostname
         self.port = port
         self.user = user
@@ -102,7 +102,7 @@ class Remote(Executor):
 def remotely(host, *ext_args, **ext_kwargs):
     def wrap(func):
         def wrapped_f(*args, **kwargs):
-            return Remote(func, host, *ext_args, **ext_kwargs)(*args, **kwargs)
+            return Remotely(func, host, *ext_args, **ext_kwargs)(*args, **kwargs)
         return wrapped_f
     return wrap
 
