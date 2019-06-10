@@ -1,13 +1,17 @@
 #!/usr/bin/python3
 
-import os, sys, re, inspect, types, logging, pickle
+import sys
+import re
+import inspect
+import types
+import logging
+import pickle
 import math
-from functools import wraps
 
 #
 # The script is in the form (not exactly)
 #  ```
-#  import foundamental modules  # there are some foundamental modules that we cannot avoid
+#  import fundamental modules  # there are some fundamental modules that we cannot avoid
 #
 #  stdout('---- separator ----')  # if ssh printed something we can separate it from the script's output stream
 #  stderr('---- separator ----')  # as for the error stream
@@ -18,7 +22,7 @@ from functools import wraps
 #  def foo(*args, **kwargs):  # this being the function to invoke
 #    ..
 #
-#  x = foo(...)                   # here the function in invoked, the return value stored and any stderr/stdout data confined 
+#  x = foo(...)                   # the function in invoked, the return value stored and any stderr/stdout data confined
 #  stdout('---- separator ----')  # again we output a separator to separate the script's output from the returned value
 #  stdout(serialize(x))           # and finally we serialize the returned value using the output stream
 #  ```
@@ -33,6 +37,7 @@ from functools import wraps
 # ----- separator ------ |
 # script returned value  |
 #
+
 
 class Executor:
 
@@ -50,12 +55,12 @@ class Executor:
         sys.stderr.write(out)
 
     def _gen_source(self, func):
-        '''1) get the function source code
+        """1) get the function source code
         2) remove any "@remote.remotely(...)" decorator
         3) reindent the code as if the function was top-level
         :param func the function to process
         :return the code and the indentation (both as strings)
-        '''
+        """
         source = inspect.getsource(func)
         for decorator in self.decorators:
             pair = decorator.split('.')
@@ -66,7 +71,7 @@ class Executor:
         count = len(lines[0]) - len(lines[0].lstrip())
         indent = lines[0][:count]
         lines = [line[count:] for line in lines]
-        return ('\n'.join(lines), indent)
+        return '\n'.join(lines), indent
 
     @staticmethod
     def _print_script(script):

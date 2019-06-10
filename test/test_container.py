@@ -1,6 +1,6 @@
 #!/usr/bin/python3
 
-import sys, os, io, logging, types, unittest
+import sys
 
 sys.path.append('..')
 
@@ -9,6 +9,7 @@ from execute.contained import contained
 
 image = 'python'
 tag = '3'
+
 
 def dock(func, *args, **kwargs):
     return Contained(func, image, tag=tag)(*args, **kwargs)
@@ -100,10 +101,3 @@ def test_nested():
             return y * 2
         return [inner(z) for z in x]
     assert([2, 4, 6] == dock(outer, [1, 2, 3]))
-
-
-def test_load():
-    def load_avarage():
-    	return os.getloadavg()
-
-    assert(len(dock(load_avarage)) == 3)

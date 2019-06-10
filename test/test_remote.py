@@ -1,6 +1,7 @@
 #!/usr/bin/python3
 
-import sys, os
+import sys
+import os
 
 sys.path.append('..')
 
@@ -16,6 +17,7 @@ opts = {
     'StrictHostKeyChecking': False,
     'UserKnownHostsFile': '/dev/null'
 }
+
 
 def test_decorator():
     @remotely(host, port=port, user=user, key=pkey, ssh_options=opts)
@@ -72,7 +74,7 @@ def test_string():
 
 def test_tuple():
     def asd():
-        return (12, 'hello')
+        return 12, 'hello'
     assert((12, 'hello') == rem(asd))
 
 
@@ -117,14 +119,8 @@ def test_nested():
     assert([2, 4, 6] == rem(outer, [1, 2, 3]))
 
 
-def test_load():
-    def load_avarage():
-    	return os.getloadavg()
-
-    assert(len(rem(load_avarage)) == 3)
-
-
 def test_user():
     def get_user():
+        import os
         return os.getlogin()
     assert(rem(get_user) == user)

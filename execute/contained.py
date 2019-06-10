@@ -1,13 +1,14 @@
 #!/usr/bin/python3
 
-import os, sys, re, subprocess, logging
-from functools import wraps
+import subprocess
 from .executor import Executor
+
 
 class ContainerException(Exception):
 
     def __init__(self, name):
         super().__init__(name)
+
 
 class Contained(Executor):
 
@@ -22,8 +23,6 @@ class Contained(Executor):
         python = self.python or 'python3'
         if self.py_options:
             python += ' ' + self.py_options
-        local_script = '/tmp/asdasdasd.py'
-        remote_script = local_script
 
         command = [
             'docker', 'run', '-i', '--rm',

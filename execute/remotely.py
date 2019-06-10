@@ -1,8 +1,10 @@
 #!/usr/bin/python3
 
-import os, sys, subprocess, logging
-from functools import wraps
+import os
+import sys
+import subprocess
 from .executor import Executor
+
 
 class RemoteException(Exception):
 
@@ -24,18 +26,19 @@ class RemoteInterpreterMissing(RemoteException):
 
 
 class Remotely(Executor):
-
-    def __init__(self, func, hostname,
-        port=22,  # ssh port
-        user=None,  # ssh username
-        password=None,  # ssh password
-        key=None,  # ssh private key for auth.
-        compression=False,  # ssh uses compression
-        quiet=False,  # ssh does not print warning messages
-        ssh_options=None,  # extra ssh options to be passed as -o
-        python=None,  # python interpreter or current one
-        py_options=None  # extra py arguments to pass to the interpreter
-    ):
+    def __init__(
+            self,
+            func,
+            hostname,
+            port=22,            # ssh port
+            user=None,          # ssh username
+            password=None,      # ssh password
+            key=None,           # ssh private key for auth.
+            compression=False,  # ssh uses compression
+            quiet=True,        # ssh does not print warning messages
+            ssh_options=None,   # extra ssh options to be passed as -o
+            python=None,        # python interpreter or current one
+            py_options=None):   # extra py arguments to pass to the interpreter
         super().__init__(func, python, py_options, ['remotely.remotely'])
         self.host = hostname
         self.port = port
@@ -47,17 +50,19 @@ class Remotely(Executor):
         self.ssh_options = ssh_options
 
     def _execute(self, script):
-        
-        python = self.python if self.python else os.path.basename(sys.executable)
-        python += '' if not self.py_options else ' %s' % self.py_options
-        
-        host = '{user}@{host}'.format(
-            user=self.user,
-            host=self.host
-        ) if self.user else self.host
-        
+
+        python = self.python or os.path.basename(sys.executable)
+
+        if self.py_options:
+            python += ' %s' % self.py_options
+
+        host = self.host
+
+        if self.user:
+            host = '{user}@{host}'.format(user=self.user, host=host)
+
         command = ['ssh']
-        
+
         if self.port:
             command += ['-p', str(self.port)]
 
@@ -76,7 +81,7 @@ class Remotely(Executor):
                     command += ['-o', '%s=%s' % (name, 'yes' if value else 'no')]
                 else:
                     command += ['-o', '%s=%s' % (name, str(value))]
-        
+
         command += [host, python]
 
         with subprocess.Popen(
@@ -91,11 +96,11 @@ class Remotely(Executor):
 
     def _fail(self, err):
         if err:
-            if 'Connection closed by remote host' in err.decode(self.encoding):
+            if 'Connection closed by remote host' in err:
                 raise RemoteConnectionRefused()
-            if 'command not found' in err.decode(self.encoding):
-                raise RemoteInterpreterMissing(python)
-                raise RemoteException(err)
+            if 'command not found' in err:
+                raise RemoteInterpreterMissing(self.python)
+            raise RemoteException(err)
         raise RemoteException('remote execution failed')
 
 
